@@ -1,0 +1,21 @@
+language: python
+python:
+  - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.9"
+  - "3.9-dev"
+env:
+  - SQLALCHEMY_VERSION=1.0
+  - SQLALCHEMY_VERSION=1.1
+  - SQLALCHEMY_VERSION=1.2
+  - SQLALCHEMY_VERSION=1.3
+  - SQLALCHEMY_VERSION=1.4.0b1
+install:
+  - pip install -r requirements.txt
+  - pip install sqlalchemy==$SQLALCHEMY_VERSION
+  - pip install codecov
+script:
+  - pytest --cov-report term --cov=sqlalchemy_filters
+after_success:
+  - codecov

@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: data-api-dev
+    networks:
+      - api-network
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    env_file:
+      - docker-compose.env
+
+networks:
+  api-network:
+    driver: bridge
