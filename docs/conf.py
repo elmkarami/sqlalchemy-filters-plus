@@ -33,7 +33,6 @@ release = "1.0"
 # ones.
 extensions = ["sphinx_rtd_theme", "sphinx.ext.autodoc"]
 autodoc_member_order = "bysource"
-autodoc_mock_imports = []
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
