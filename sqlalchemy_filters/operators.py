@@ -9,7 +9,6 @@ from typing import Type
 from typing import Optional
 from typing import TypeVar
 
-from sqlalchemy import __version__
 from sqlalchemy import column
 from sqlalchemy import func
 from sqlalchemy.sql.elements import BinaryExpression
@@ -31,6 +30,7 @@ from sqlalchemy.sql.operators import or_
 from sqlalchemy.sql.operators import startswith_op
 
 from sqlalchemy_filters.exceptions import InvalidParamError
+from sqlalchemy_filters.utils import SQLALCHEMY_VERSION, empty_sql
 
 T = TypeVar("T")
 V = TypeVar("V", str, ClauseElement)
@@ -71,12 +71,20 @@ def sa_1_4_compatible(f):
         >>> (column("x") == 1) | text("1 = 1")
 
     """
-    if not __version__.startswith("1.4"):
+    if not SQLALCHEMY_VERSION.startswith("1.4"):
         return f
 
     @wraps(f)
     def wrapper(self):
         sql_exp = self.get_sql_expression()
+        if all(
+            map(
+                lambda x: isinstance(x, TextClause) and empty_sql().compare(x),
+                [*self.params, sql_exp],
+            )
+        ):
+            return empty_sql()
+
         if isinstance(sql_exp, TextClause):
             return self.operator(*self.params, sql_exp)
         return f(self)

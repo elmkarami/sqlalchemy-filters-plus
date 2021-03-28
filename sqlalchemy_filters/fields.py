@@ -4,6 +4,7 @@ This module defines all types of fields used by the filter classes.
 from datetime import date
 from datetime import datetime
 from datetime import time
+from datetime import timezone
 from decimal import Decimal
 from typing import Any
 from typing import Callable
@@ -25,6 +26,7 @@ from sqlalchemy_filters.operators import EqualsOperator
 from sqlalchemy_filters.utils import Empty
 from sqlalchemy_filters.utils import empty_sql
 from sqlalchemy_filters.utils import is_none
+from sqlalchemy_filters.utils import to_timezone
 
 
 class BaseField:
@@ -296,9 +298,14 @@ class BooleanField(TypedField):
 class TimestampField(FloatField):
     is_timestamp = True
 
+    def __init__(self, *, timezone=timezone.utc, **kwargs):
+        self.timezone = timezone
+        super().__init__(**kwargs)
+
+    @to_timezone
     def validate(self, value: Union[int, float]) -> datetime:
         value = super().validate(value)
-        return datetime.fromtimestamp(value)
+        return datetime.fromtimestamp(value, self.timezone)
 
 
 class BaseDateField(TimestampField):
@@ -314,6 +321,7 @@ class BaseDateField(TimestampField):
         self.is_timestamp = is_timestamp
         super().__init__(**kwargs)
 
+    @to_timezone
     def validate(self, value: Union[str, datetime, date, int, float]) -> datetime:
         if self.is_timestamp:
             return super().validate(value)
@@ -327,6 +335,7 @@ class DateTimeField(BaseDateField):
     def __init__(self, *, datetime_format: str = "%Y-%m-%d", **kwargs):
         super().__init__(date_format=datetime_format, **kwargs)
 
+    @to_timezone
     def validate(self, value: Union[str, datetime, date, int, float]) -> datetime:
         if isinstance(value, datetime):
             return value

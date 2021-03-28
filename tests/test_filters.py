@@ -1,5 +1,6 @@
 from datetime import date
 from datetime import datetime
+from datetime import timezone
 from unittest.mock import Mock
 
 import pytest
@@ -386,13 +387,13 @@ def test_typed_filter():
         first_name="Name",
         age=30,
         birth_date=date(1990, 1, 1),
-        created_at=datetime(2021, 1, 1),
+        created_at=datetime(2021, 1, 1, tzinfo=timezone.utc),
     )
     user2 = UserFactory(
         last_name="Last Name",
         age=25,
         birth_date=date(1995, 1, 1),
-        created_at=datetime(2020, 1, 1),
+        created_at=datetime(2020, 1, 1, tzinfo=timezone.utc),
     )
     filter_obj = TypedFilter(
         data={"first_name": "Name", "min_age": 30, "created_at": "2020-01-01"},
@@ -518,7 +519,7 @@ def test_apply_nested_filter():
         last_name="Last Name",
         age=25,
         birth_date=date(1995, 1, 1),
-        created_at=datetime(2020, 1, 1),
+        created_at=datetime(2020, 1, 1, tzinfo=timezone.utc),
         email="abc@test2.com",
     )
     result = (
