@@ -181,6 +181,7 @@ class MethodField(BaseField):
     :Warning: The :attr:`MethodField` does not provide any validation and consumes any values extracted from
             the :attr:`data <sqlalchemy_filters.filters.BaseFilter.data>` field.
     """
+
     #:
     method: Callable
 

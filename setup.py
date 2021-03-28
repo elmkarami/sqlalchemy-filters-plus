@@ -1,13 +1,13 @@
 import pathlib
 from setuptools import setup, find_packages
 
-HERE = pathlib.Path(__file__)
+HERE = pathlib.Path(__file__).parent
 
 version = "1.0.0"
 
 
 setup(
-    name="sqlalchemy-filters",
+    name="sqlalchemy-filters-plus",
     version=version,
     description="""SQLAlchemy filters made easy""",
     long_description=(HERE / "README.md").read_text(),
@@ -25,5 +25,5 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
-    ]
+    ],
 )
