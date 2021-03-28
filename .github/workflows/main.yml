@@ -4,8 +4,6 @@ on:
       - '**'
       - '!master'
   release:
-    types:
-      - created
 
 jobs:
   publish:
