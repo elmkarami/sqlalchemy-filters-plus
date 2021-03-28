@@ -261,14 +261,16 @@ def test_2_foreign_keys():
     assert len(result) == 2
     assert {result[0], result[1]} == {a1, a2}
 
-    filter_obj = Contains2FKFilter(data={"author_first_name": "Name", "author_last_name": "some"})
+    filter_obj = Contains2FKFilter(
+        data={"author_first_name": "Name", "author_last_name": "some"}
+    )
     result = filter_obj.apply().all()
     assert len(result) == 1
     assert result[0] == a1
 
     filter_obj = Contains2FKFilter(
         data={"author_first_name": "Name", "author_last_name": "test"},
-        operator=OrOperator
+        operator=OrOperator,
     )
     result = filter_obj.apply().all()
     assert len(result) == 2
