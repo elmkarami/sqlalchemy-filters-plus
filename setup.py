@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 HERE = pathlib.Path(__file__).parent
 
-version = "1.0.0"
+version = "1.0.2"
 
 
 setup(
