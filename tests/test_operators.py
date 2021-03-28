@@ -27,7 +27,7 @@ def test_register_operator():
 
 @pytest.mark.parametrize("version", ["1", "1.1", "1.2", "1.3", "1.3.22"])
 def test_sa_1_4_compatible_for_older_versions(version):
-    with patch.object(operators, "__version__", version):
+    with patch.object(operators, "SQLALCHEMY_VERSION", version):
         f = Mock()
         assert operators.sa_1_4_compatible(f) is f
 
@@ -40,7 +40,7 @@ def test_sa_1_4_compatible_for_older_versions(version):
     ],
 )
 def test_sa_1_4_compatible(sql_exp, params):
-    with patch.object(operators, "__version__", "1.4"):
+    with patch.object(operators, "SQLALCHEMY_VERSION", "1.4"):
         to_sql = Mock()
         self = Mock(get_sql_expression=Mock(return_value=sql_exp), params=[params])
         to_sql_v2 = operators.sa_1_4_compatible(to_sql)
@@ -60,7 +60,7 @@ def test_sa_1_4_compatible(sql_exp, params):
     ],
 )
 def test_sa_1_4_compatible_should_not_alter_params(sql_exp, params):
-    with patch.object(operators, "__version__", "1.4"):
+    with patch.object(operators, "SQLALCHEMY_VERSION", "1.4"):
         to_sql = Mock()
         self = Mock(get_sql_expression=Mock(return_value=sql_exp), params=[params])
         to_sql_v2 = operators.sa_1_4_compatible(to_sql)

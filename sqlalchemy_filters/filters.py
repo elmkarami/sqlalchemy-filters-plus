@@ -27,7 +27,7 @@ from sqlalchemy_filters.fields import Empty
 from sqlalchemy_filters.mixins import MarshmallowValidatorFilterMixin
 from sqlalchemy_filters.operators import AndOperator
 from sqlalchemy_filters.operators import BaseOperator
-from sqlalchemy_filters.utils import empty_sql
+from sqlalchemy_filters.utils import empty_sql, get_already_joined_tables
 from sqlalchemy_filters.fields import (
     Field,
     MethodField,
@@ -315,7 +315,7 @@ class BaseFilter(metaclass=FilterType):
                 cls.fields[field_name] = field_obj
 
     def _apply_join(self, query):
-        joins = {mapper.class_ for mapper in query._join_entities}
+        joins = set(get_already_joined_tables(query))
         for field in self.fields.values():
             if field.join:
                 joins.add(field.join)

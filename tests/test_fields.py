@@ -1,5 +1,6 @@
 from datetime import date
 from datetime import datetime
+from datetime import timezone
 from unittest.mock import call
 from unittest.mock import Mock
 
@@ -318,17 +319,17 @@ def test_field_error_validation(field_class: Field, values):
         [
             DateField(is_timestamp=True),
             [
-                ("1579734000.0", date(2020, 1, 23)),
-                (1579734000.0, date(2020, 1, 23)),
-                (1579734000, date(2020, 1, 23)),
+                ("1579734000.0", date(2020, 1, 22)),
+                (1579734000.0, date(2020, 1, 22)),
+                (1579734000, date(2020, 1, 22)),
             ],
         ],
         [
             DateTimeField(is_timestamp=True),
             [
-                ("1579778662.0", datetime(2020, 1, 23, 12, 24, 22)),
-                (1579778662.0, datetime(2020, 1, 23, 12, 24, 22)),
-                (1579778662, datetime(2020, 1, 23, 12, 24, 22)),
+                ("1579778662.0", datetime(2020, 1, 23, 11, 24, 22, 0, timezone.utc)),
+                (1579778662.0, datetime(2020, 1, 23, 11, 24, 22, 0, timezone.utc)),
+                (1579778662, datetime(2020, 1, 23, 11, 24, 22, 0, timezone.utc)),
             ],
         ],
         [
@@ -341,19 +342,19 @@ def test_field_error_validation(field_class: Field, values):
         [
             DateTimeField(datetime_format="%Y/%m/%d"),
             [
-                ("2020/01/23", datetime(2020, 1, 23)),
-                ("2020/01/02", datetime(2020, 1, 2)),
-                (datetime(2020, 12, 2), datetime(2020, 12, 2)),
-                (date(2020, 12, 2), datetime(2020, 12, 2)),
+                ("2020/01/23", datetime(2020, 1, 23, tzinfo=timezone.utc)),
+                ("2020/01/02", datetime(2020, 1, 2, tzinfo=timezone.utc)),
+                (datetime(2020, 12, 2), datetime(2020, 12, 2, tzinfo=timezone.utc)),
+                (date(2020, 12, 2), datetime(2020, 12, 2, tzinfo=timezone.utc)),
             ],
         ],
         [
             DateTimeField(datetime_format="%Y/%m/%d %H:%M:%S"),
             [
-                ("2020/01/23 12:24:22", datetime(2020, 1, 23, 12, 24, 22)),
-                ("2020/01/02 00:00:00", datetime(2020, 1, 2)),
-                (datetime(2020, 12, 2), datetime(2020, 12, 2)),
-                (date(2020, 12, 2), datetime(2020, 12, 2)),
+                ("2020/01/23 12:24:22", datetime(2020, 1, 23, 12, 24, 22, 0, timezone.utc)),
+                ("2020/01/02 00:00:00", datetime(2020, 1, 2, tzinfo=timezone.utc)),
+                (datetime(2020, 12, 2), datetime(2020, 12, 2, tzinfo=timezone.utc)),
+                (date(2020, 12, 2), datetime(2020, 12, 2, tzinfo=timezone.utc)),
             ],
         ],
     ],
