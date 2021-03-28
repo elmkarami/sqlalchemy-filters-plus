@@ -1,6 +1,6 @@
 ![example workflow](https://github.com/elmkarami/sqlalchemy-filters-plus/actions/workflows/release.yml/badge.svg)
 ![example workflow](https://github.com/elmkarami/sqlalchemy-filters-plus/actions/workflows/main.yml/badge.svg)
-[![codecov](https://codecov.io/gh/elmkarami/sqlalchemy-filter/branch/main/graph/badge.svg?token=7CNX42CLIB)](https://codecov.io/gh/elmkarami/sqlalchemy-filter)
+[![codecov](https://codecov.io/gh/elmkarami/sqlalchemy-filters-plus/branch/master/graph/badge.svg?token=I7ZC1WQYEQ)](https://codecov.io/gh/elmkarami/sqlalchemy-filters-plus)
 
 sqlalchemy-filters-plus is a light-weight extendable library for filtering queries with sqlalchemy.
 
