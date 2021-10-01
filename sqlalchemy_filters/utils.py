@@ -40,4 +40,5 @@ def to_timezone(func):
         if isinstance(value, datetime):
             value = value.replace(tzinfo=value.tzinfo or self.timezone)
         return value
+
     return wrapper

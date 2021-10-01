@@ -28,11 +28,9 @@ class User(Base):
     last_login_time = Column(Time)
 
     def __repr__(self):
-        return "<User(first_name='%s', last_name='%s', email='%s', age='%s')>" % (
-            self.first_name,
-            self.last_name,
-            self.email,
-            self.age,
+        return (
+            "<User(first_name='%s', last_name='%s', email='%s', age='%s', birth_date=%s)>"
+            % (self.first_name, self.last_name, self.email, self.age, self.birth_date)
         )
 
 

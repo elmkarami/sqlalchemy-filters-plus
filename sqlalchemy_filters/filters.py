@@ -20,14 +20,18 @@ from sqlalchemy import (
     DateTime,
     Boolean,
 )
+from sqlalchemy.sql.elements import UnaryExpression
 
-from sqlalchemy_filters.exceptions import FieldValidationError
-from sqlalchemy_filters.exceptions import FilterValidationError
+from sqlalchemy_filters.exceptions import (
+    FieldValidationError,
+    FilterValidationError,
+    OrderByException,
+)
 from sqlalchemy_filters.fields import Empty
 from sqlalchemy_filters.mixins import MarshmallowValidatorFilterMixin
 from sqlalchemy_filters.operators import AndOperator
 from sqlalchemy_filters.operators import BaseOperator
-from sqlalchemy_filters.utils import empty_sql, get_already_joined_tables
+from sqlalchemy_filters.utils import empty_sql, get_already_joined_tables, is_none
 from sqlalchemy_filters.fields import (
     Field,
     MethodField,
@@ -39,6 +43,7 @@ from sqlalchemy_filters.fields import (
     DateTimeField,
     BooleanField,
 )
+from sqlalchemy_filters.paginator import Paginator
 
 
 FILTERS_MAPPING = {
@@ -194,8 +199,12 @@ class FilterType(type):
 
         declared_fields = getattr(meta, "fields", [])
         attrs["session"] = getattr(meta, "session", None)
+        attrs["_order_by"] = getattr(meta, "order_by", None)
+        attrs["_limit"] = getattr(meta, "page_size", None)
+        attrs["_offset"] = 0
         attrs["marshmallow_schema"] = getattr(meta, "marshmallow_schema", None)
         attrs["declared_fields"] = declared_fields
+        attrs["_model"] = meta.model
         mcs.check_field_name(name, meta.model, fields)
         _class: Filter = super().__new__(mcs, name, bases, attrs)  # noqa
 
@@ -235,12 +244,20 @@ class BaseFilter(metaclass=FilterType):
 
     #: If true, no check is applied to the filter class
     _abstract = True
+    #: SQLAlchemy model
+    _model = None
     #: Fields declared using any class that inherits from :attr:`Filter`
     fields: Dict[str, Field]
     #: NestedFilter
     nested: Dict[str, NestedFilter]
     #: Method fields
     method_fields: Dict[str, MethodField]
+    #: Ordering the query
+    _order_by: Any = None
+    #: Limit of the query: Equivalent to query.limit(limit)
+    _limit: Optional[int] = None
+    #: Offset of the query: Equivalent to query.offset(offset)
+    _offset: Optional[int] = None
     #: Operator describing how to join the fields
     operator = Type[BaseOperator]
     #: Flag to whether the data was validated or not
@@ -454,6 +471,61 @@ class BaseFilter(metaclass=FilterType):
         self.validate()
         return self.apply_methods(self.apply_nested(self.apply_fields()))
 
+    def _parse_order_by(self, _order_by):
+        if isinstance(_order_by, UnaryExpression):
+            return _order_by
+        if not isinstance(_order_by, str):
+            return None
+        _order_by = _order_by.strip()
+        field = getattr(self._model, _order_by.replace("-", ""), None)
+        if not field:
+            raise OrderByException(
+                f"{self._model.__name__} does not have a field called "
+                f"'{_order_by.replace('-', '')}' to use in an ORDER BY clause."
+            )
+        return getattr(field, "desc" if _order_by.startswith("-") else "asc")()
+
+    def order_by(self, query):
+        """
+        Order the query by the specified `order_by` in the Meta class
+        :param query: SQLAlchemy `Query` object.
+        :return: Ordered SQLAlchemy `Query` object.
+        """
+        order_by = self.data.get("order_by") or self._order_by
+        if is_none(order_by):
+            return query
+        if isinstance(order_by, str):
+            order_by = [
+                self._parse_order_by(ob)
+                for ob in order_by.split(",")
+                if ob and ob.strip()
+            ]
+        elif isinstance(order_by, (list, tuple)):
+            order_by = [self._parse_order_by(ob) for ob in order_by]
+        else:
+            order_by = [self._parse_order_by(order_by)]
+        order_by = [ob for ob in order_by if not is_none(ob)]
+        if not order_by:
+            return query
+        return query.order_by(*order_by)
+
+    def paginate(self) -> Paginator:
+        """
+        Creates a paginator that does all the work to slice the queries into a
+        :attr:`Paginator <sqlalchemy_filters.paginator.Paginator>` object.
+
+        :return: Return a :attr:`Paginator <sqlalchemy_filters.paginator.Paginator>`
+        """
+        page_size = int(self.data.get("page_size") or self._limit or 0)
+        # Offset starts at 0
+        page = int(self.data.get("page") or 1)
+        if page < 1:
+            page = 1
+        if page_size <= 0:
+            page_size = 0
+
+        return Paginator(query=self.apply(), page=page, page_size=page_size)
+
     def apply(self):
         """
         Applies all fields, then using that result to filter the query then apply the joining of any potentiel foreign
@@ -464,6 +536,7 @@ class BaseFilter(metaclass=FilterType):
         filters = self.apply_all()
         query = self.query.filter(filters)
         query = self._apply_join(query)
+        query = self.order_by(query)
         return query
 
 

@@ -351,7 +351,10 @@ def test_field_error_validation(field_class: Field, values):
         [
             DateTimeField(datetime_format="%Y/%m/%d %H:%M:%S"),
             [
-                ("2020/01/23 12:24:22", datetime(2020, 1, 23, 12, 24, 22, 0, timezone.utc)),
+                (
+                    "2020/01/23 12:24:22",
+                    datetime(2020, 1, 23, 12, 24, 22, 0, timezone.utc),
+                ),
                 ("2020/01/02 00:00:00", datetime(2020, 1, 2, tzinfo=timezone.utc)),
                 (datetime(2020, 12, 2), datetime(2020, 12, 2, tzinfo=timezone.utc)),
                 (date(2020, 12, 2), datetime(2020, 12, 2, tzinfo=timezone.utc)),
