@@ -1,9 +1,9 @@
 coverage==5.3
 pytest==6.1.2
 pytest-cov==2.10.1
-factory_boy
+factory-boy==3.2.0
 pytest-cov==2.10.1
-faker==5.0.2
+faker==8.14.0
 marshmallow==3.10.0
 tox==3.23.0
 black==20.8b1
