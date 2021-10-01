@@ -10,7 +10,11 @@ from marshmallow import ValidationError, Schema, fields
 from sqlalchemy_filters import Field
 from sqlalchemy_filters import Filter
 from sqlalchemy_filters import NestedFilter
-from sqlalchemy_filters.exceptions import FilterValidationError, OrderByException
+from sqlalchemy_filters.exceptions import (
+    FilterValidationError,
+    OrderByException,
+    FilterNotCompatible,
+)
 from sqlalchemy_filters.operators import AndOperator
 from sqlalchemy_filters.operators import OrOperator
 from sqlalchemy_filters.operators import GTEOperator
@@ -20,11 +24,12 @@ from sqlalchemy_filters.fields import IntegerField
 from sqlalchemy_filters.fields import MethodField
 from tests.factories import ArticleFactory
 from tests.factories import UserFactory
+from tests.factories import CategoryFactory
 from tests.filters import ContainsFilter
 from tests.filters import ContainsFKFilter
 from tests.filters import Contains2FKFilter
 from tests.filters import EqualFilter
-from tests.filters import MultipleFKFilter
+from tests.filters import ArticleMultipleFKFilter
 from tests.filters import MyNestedFilter
 from tests.filters import StartsWithFilter
 from tests.filters import TypedFilter
@@ -33,7 +38,8 @@ from tests.filters import InheritMyNestedFilter
 from tests.filters import AgeMarshmallowFilter
 from tests.filters import FirstNameMarshmallowFilter
 from tests.filters import PaginateAndOrderFilter
-from tests.models import User
+from tests.filters import MultiDepthFilter
+from tests.models import User, Article
 from tests.utils import compares_expressions
 
 
@@ -284,14 +290,14 @@ def test_multiple_filters():
     user2 = UserFactory(last_name="Last Name")
     a1 = ArticleFactory(user=user)
     a2 = ArticleFactory(user=user2)
-    filter_obj = MultipleFKFilter(
+    filter_obj = ArticleMultipleFKFilter(
         data={"author_first_name": "Name", "author_last_name_istarts": "lasT"},
         operator=OrOperator,
     )
     result = filter_obj.apply().order_by(User.id.asc()).all()
     assert len(result) == 2
     assert result == [a1, a2]
-    filter_obj = MultipleFKFilter(
+    filter_obj = ArticleMultipleFKFilter(
         data={"author_first_name": "Name", "author_last_name_istarts": "Name"},
         operator=OrOperator,
     )
@@ -789,3 +795,55 @@ def test_order_by(db_session):
     assert result.all() == [user4, user3, user, user2]
     result = MyFilter(data={"order_by": ["birth_date", "-first_name"]}).apply()
     assert result.all() == [user, user2, user4, user3]
+
+
+def test_multi_depth_fk(db_session):
+    user = UserFactory(first_name="B")
+    user2 = UserFactory(first_name="A")
+    user3 = UserFactory(first_name="C")
+    category = CategoryFactory(name="Fiction")
+    category2 = CategoryFactory(name="Soft skills")
+    category3 = CategoryFactory(name="Software engineering")
+    ArticleFactory(user=user, category=category)
+    ArticleFactory(user=user2, category=category2)
+    ArticleFactory(user=user3, category=category3)
+    result = MultiDepthFilter(
+        data={"category": "SKILLS", "nestable_category_name": "SoftwarE"}
+    ).apply()
+    assert result.all() == [user2, user3]
+
+
+def test_incompatible_inheritance():
+    class MyFilter(Filter):
+        class Meta:
+            model = User
+
+    with pytest.raises(FilterNotCompatible) as exc:
+
+        class _(MyFilter):
+            class Meta:
+                model = Article
+
+    assert (
+        str(exc.value)
+        == "_.Meta.model(tests.models.Article) is not compatible with MyFilter.meta.model(tests.models.User)"
+    )
+
+
+def test_incompatible_nested():
+    class MyFilter(Filter):
+        class Meta:
+            model = User
+
+    with pytest.raises(FilterNotCompatible) as exc:
+
+        class _(Filter):
+            name = NestedFilter(MyFilter)
+
+            class Meta:
+                model = Article
+
+    assert (
+        str(exc.value)
+        == "_.Meta.model(tests.models.Article) is not compatible with MyFilter.meta.model(tests.models.User)"
+    )

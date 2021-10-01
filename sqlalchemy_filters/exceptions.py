@@ -98,3 +98,17 @@ class OrderByException(BaseError):
     """
 
     pass
+
+
+class FilterNotCompatible(BaseError):
+    """
+    Raised when trying to inherit from a filter(or used as a NestedFilter) with different model.
+    """
+
+    def __init__(self, class_name, model, base_filter):
+        message = (
+            f"{class_name}.Meta.model({model.__module__}.{model.__name__}) is not compatible with "
+            f"{base_filter.__name__}.meta.model({base_filter.Meta.model.__module__}."
+            f"{base_filter.Meta.model.__name__})"
+        )
+        super().__init__(message)

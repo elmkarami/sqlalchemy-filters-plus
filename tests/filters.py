@@ -1,21 +1,24 @@
 from marshmallow import Schema, fields, validate
 
-from sqlalchemy_filters.fields import DateField
-from sqlalchemy_filters.fields import DateTimeField
-from sqlalchemy_filters.fields import Field
-from sqlalchemy_filters.fields import IntegerField
-from sqlalchemy_filters.fields import StringField
-from sqlalchemy_filters.filters import Filter as BaseFilter
-from sqlalchemy_filters.filters import NestedFilter
-from sqlalchemy_filters.operators import ContainsOperator
-from sqlalchemy_filters.operators import EqualsOperator
-from sqlalchemy_filters.operators import GTOperator
-from sqlalchemy_filters.operators import IStartsWithOperator
-from sqlalchemy_filters.operators import LTEOperator
-from sqlalchemy_filters.operators import OrOperator
-from sqlalchemy_filters.operators import StartsWithOperator
-from tests.models import Article
-from tests.models import User
+from sqlalchemy_filters.fields import (
+    DateField,
+    DateTimeField,
+    Field,
+    IntegerField,
+    StringField,
+)
+from sqlalchemy_filters.filters import Filter as BaseFilter, NestedFilter
+from sqlalchemy_filters.operators import (
+    ContainsOperator,
+    EqualsOperator,
+    GTOperator,
+    IStartsWithOperator,
+    LTEOperator,
+    OrOperator,
+    StartsWithOperator,
+    IContainsOperator,
+)
+from tests.models import Article, User
 
 filter_registry = set()
 
@@ -71,7 +74,7 @@ class Contains2FKFilter(ContainsFKFilter):
         model = Article
 
 
-class MultipleFKFilter(Filter):
+class ArticleMultipleFKFilter(Filter):
     author_first_name = Field(
         field_name="user.first_name",
         lookup_operator=ContainsOperator,
@@ -83,6 +86,19 @@ class MultipleFKFilter(Filter):
 
     class Meta:
         model = Article
+
+
+class UserMultipleFilter(Filter):
+    author_first_name = Field(
+        field_name="first_name",
+        lookup_operator=ContainsOperator,
+    )
+    author_last_name_istarts = Field(
+        field_name="last_name", lookup_operator=IStartsWithOperator
+    )
+
+    class Meta:
+        model = User
 
 
 class TypedFilter(Filter):
@@ -98,7 +114,7 @@ class TypedFilter(Filter):
 class MyNestedFilter(Filter):
     email = StringField(lookup_operator=ContainsOperator)
     nested1 = NestedFilter(TypedFilter, operator=OrOperator, flat=False)
-    nested2 = NestedFilter(MultipleFKFilter, operator=OrOperator, flat=False)
+    nested2 = NestedFilter(UserMultipleFilter, operator=OrOperator, flat=False)
 
     class Meta:
         model = User
@@ -125,7 +141,7 @@ class AgeMarshmallowFilter(MyNestedFilter):
 
 class FirstNameMarshmallowFilter(MyNestedFilter):
     nested2 = NestedFilter(
-        MultipleFKFilter,
+        UserMultipleFilter,
         operator=OrOperator,
         flat=False,
         marshmallow_schema=FirstNameOneOfwSchema,
@@ -142,3 +158,35 @@ class PaginateAndOrderFilter(Filter):
         model = User
         order_by = User.birth_date.desc()
         page_size = 1
+
+
+class UserCategoryFilter(Filter):
+    category_name = Field(
+        field_name="articles.category.name", lookup_operator=IContainsOperator
+    )
+    first_name = Field()
+
+    class Meta:
+        model = User
+
+
+class NestableUserCategoryFilter(Filter):
+    nestable_category_name = Field(
+        field_name="articles.category.name", lookup_operator=IContainsOperator
+    )
+    first_name = Field()
+
+    class Meta:
+        model = User
+
+
+class MultiDepthFilter(UserCategoryFilter):
+    category = Field(
+        field_name="articles.category.name", lookup_operator=IContainsOperator
+    )
+    nested_category = NestedFilter(
+        NestableUserCategoryFilter, outer_operator=OrOperator, flat=True
+    )
+
+    class Meta:
+        model = User

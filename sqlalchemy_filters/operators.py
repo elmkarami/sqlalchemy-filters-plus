@@ -28,6 +28,7 @@ from sqlalchemy.sql.operators import le
 from sqlalchemy.sql.operators import lt
 from sqlalchemy.sql.operators import or_
 from sqlalchemy.sql.operators import startswith_op
+from sqlalchemy.sql.operators import ilike_op
 
 from sqlalchemy_filters.exceptions import InvalidParamError
 from sqlalchemy_filters.utils import SQLALCHEMY_VERSION, empty_sql
@@ -219,6 +220,14 @@ class OrOperator(BaseOperator):
 @register_operator(sql_operator=contains_op)
 class ContainsOperator(BaseOperator):
     pass
+
+
+@register_operator(sql_operator=contains_op)
+class IContainsOperator(BaseOperator):
+    def to_sql(self):
+        return self.operator(
+            func.lower(self.get_sql_expression()), func.lower(*self.params)
+        )
 
 
 @register_operator(sql_operator=startswith_op)

@@ -12,6 +12,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import Union
+import warnings
 
 from sqlalchemy import column  # type: ignore
 from sqlalchemy.sql.elements import BinaryExpression
@@ -82,7 +83,12 @@ class BaseField:
         self.field_name = field_name
         self.data_source_name = data_source_name
         self.lookup_operator = lookup_operator
-        self.join = join or None
+        if not is_none(join):
+            warnings.warn(
+                "join is deprecated and will be removed in future versions.",
+                DeprecationWarning,
+            )
+        self.joins = []
         self._column = custom_column
         self.parent = None
         self.allow_none = allow_none

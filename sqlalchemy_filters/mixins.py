@@ -1,11 +1,8 @@
-import inspect
 from typing import Optional, Type, Dict, Any
 
 from sqlalchemy_filters.utils import Empty
-
-
-def get_fk_remote_side_column(fk):
-    return next(iter(fk.property.remote_side))
+from sqlalchemy.inspection import inspect as sa_inspect
+from sqlalchemy.orm import Mapper
 
 
 class ForeignKeyFieldMixin:
@@ -16,29 +13,29 @@ class ForeignKeyFieldMixin:
         self.foreign_model = None
         self.parent_filter = None
         self.fk_model_pk = None
-        if field_name and field_name.count(".") > 1:
-            raise ValueError("Dept greater than 2 not supported yet.")
         if "." in (field_name or ""):
             self.is_foreign_key = True
 
     def resolve_fk(self):
-        attribute_name, column_name = self.field_name.split(".")
-        attribute = getattr(self.parent_filter.Meta.model, attribute_name)
-        if inspect.isclass(attribute.property.argument):
-            self.foreign_model = attribute.property.argument
-        else:
-            # TODO: we assume now it's a sqlalchemy.ext.declarative.clsregistry._class_resolver
-            self.foreign_model = attribute.property.argument()
-        self.fk_model_pk = get_fk_remote_side_column(
-            getattr(self.parent_filter.Meta.model, attribute_name)
-        )
-        self._column = getattr(self.foreign_model, column_name)
-        self.join = self.join or attribute
+        self.joins = self.resolve_joins()
+        self._column = getattr(self.joins[-1][0], self.field_name.split(".")[-1])
 
     def post_init(self, filter_obj):
         if self.is_foreign_key:
             self.resolve_fk()
         super().post_init(filter_obj)
+
+    def resolve_joins(self):
+        chained_attributes = self.field_name.split(".")
+        model = self.parent_filter.Meta.model
+        joins = []
+        for attribute in chained_attributes[:-1]:
+            mapper = sa_inspect(model)
+            relationships = dict(mapper.relationships.items())
+            relationship = relationships[attribute]
+            model = relationship.mapper.class_
+            joins.append((model, relationship.primaryjoin))
+        return joins
 
 
 class MarshmallowValidatorFilterMixin:
