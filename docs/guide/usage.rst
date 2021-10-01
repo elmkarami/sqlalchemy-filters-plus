@@ -244,3 +244,128 @@ The benefit of using a object method is that you can access other values which c
 
 .. warning::
     MethodFields do not validated input values. It is strongly recommended to validate the value before filtering.
+
+
+Paginating results
+==================
+
+Giving users the ability to paginate through results matching some filters is mandatory in every modern application.
+
+To paginate result, you should add a `page_size` attribute to the class `Meta` of the filter or pass it as part of the data at the instantiation level.
+Calling the :attr:`paginate <sqlalchemy_filters.filters.BaseFilter.paginate>` on a filter object will return a :attr:`Paginator <sqlalchemy_filters.paginator.Paginator>` object,
+this object should do all the heavy lifting of slicing and paginating through objects from the database.
+
+Here is an example of how can the paginator be generated:
+
+.. code-block:: python
+
+    class MyFilter(Filter):
+        first_name = StringField()
+
+        class Meta:
+            model = User
+            page_size = 10
+    # Or
+    >>> data = {
+        #...
+        "page_size": 20
+    }
+    # Note that we did not specify which page to get, by default it will return the first page
+    >>> paginator = MyFilter(data=data).paginate()
+    >>> paginator.page
+    1
+    # We can specify the exact page we want by passing it as part of the data
+    >>> data["page"] = 2
+    >>> paginator = MyFilter(data=data).paginate()
+    >>> paginator.page
+    2
+    # The paginator object has plenty of methods to make your life easier
+    >>> paginator.has_next_page()
+    True
+    >>> paginator.has_previous_page()
+    True
+    # how many pages should we expect given that the total object matching query and the page_size parameter
+    >>> paginator.num_pages
+    5
+    # How many objects match the query
+    >>> paginator.count
+    95
+    >>> next_paginator = paginator.next_page()
+    >>> next_paginator.page
+    3
+    >>> previous_paginator = next_paginator.previous_page()
+    >>> previous_paginator.to_json()
+    {
+        "count": 95,
+        "page_size": 20,
+        "page": 2,
+        "num_pages": 5,
+        "has_next_page": True,
+        "has_prev_page": True,
+    }
+    # Will return the objects matching the page of the paginator
+    >>> users = paginator.get_objects()
+    # Will return the sliced query using `limit` and `offset` accordingly
+    >>> query = paginator.get_sliced_query()
+
+
+Ordering results
+================
+
+`sqlalchemy-filters-plus` gives you the possibility to filter the queries by one or multiple fields.
+
+You can either specify a fixed number of fields to order by or override this behavior at instantiation level.
+
+To tell `sqlalchemy-filters-plus` how to order you results, add a `order_by` attribute in the `Meta` class, this attribute accepts multiple formats:
+
+1. Specify directly the field you want to order by (using the `SQLAlchemy way`)
+
+.. code-block:: python
+
+    class MyFilter(Filter):
+        first_name = StringField()
+
+        class Meta:
+            model = User
+            order_by = User.first_name.asc()
+
+    # Or as a list
+
+    class MyFilter(Filter):
+        first_name = StringField()
+
+        class Meta:
+            model = User
+            order_by = [User.first_name.asc(), User.last_name.desc()]
+
+2. Specify the field(s) as a string or as a list of strings, `sqlalchemy-filters-plus` will evaluate the string to decide which ordering should be applied.
+Prefix the field name with a ``-`` (minus) to apply descending order or omit it for ascending.
+
+.. code-block:: python
+
+    class MyFilter(Filter):
+        first_name = StringField()
+
+        class Meta:
+            model = User
+            order_by = "first_name" # ascending
+            # Or as a list
+            # First name ascending, while last_name descending
+            order_by =  ["first_name", "-last_name"]
+            # or Multiple fields as a single string
+            # The space between fields will be ignored, but recommended for readability
+            order_by =  "first_name, -last_name"
+
+
+Notice that the last option enables us to use it as an ordering mechanism for an API, giving users the ability to order by any field
+
+.. code-block:: python
+
+    >>> MyFilter(data={"order_by": "first_name, -last_name"})
+    >>> MyFilter(data={"order_by": ["first_name", "-last_name"]})
+    >>> MyFilter(data={"order_by": "first_name"})
+    >>> MyFilter(data={"order_by": User.first_name.asc()})
+    >>> MyFilter(data={"order_by": [User.first_name.asc(), User.last_name.desc()]})
+
+.. warning::
+    Specifying a field that does not belong to the model class will raise an :attr:`OrderByException <sqlalchemy_filters.exceptions.OrderByException>` exception.

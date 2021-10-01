@@ -90,3 +90,11 @@ class FilterValidationError(BaseError):
             ]
         """
         return [error.json() for error in self.field_errors]
+
+
+class OrderByException(BaseError):
+    """
+    Raised when trying to order by a field that does not belong to the filter's model.
+    """
+
+    pass

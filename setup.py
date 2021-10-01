@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 HERE = pathlib.Path(__file__).parent
 
-version = "1.0.3"
+version = "1.0.4"
 
 
 setup(
@@ -21,12 +21,12 @@ setup(
     keywords="sqlalchemy,filter,flask,python,sql,query",
     license="BSD",
     classifiers=[
-	"Intended Audience :: Developers",
+        "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
-    python_requires=">=3.6"
+    python_requires=">=3.6",
 )

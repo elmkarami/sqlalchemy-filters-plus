@@ -10,7 +10,7 @@ from marshmallow import ValidationError, Schema, fields
 from sqlalchemy_filters import Field
 from sqlalchemy_filters import Filter
 from sqlalchemy_filters import NestedFilter
-from sqlalchemy_filters.exceptions import FilterValidationError
+from sqlalchemy_filters.exceptions import FilterValidationError, OrderByException
 from sqlalchemy_filters.operators import AndOperator
 from sqlalchemy_filters.operators import OrOperator
 from sqlalchemy_filters.operators import GTEOperator
@@ -32,6 +32,7 @@ from tests.filters import AgeSchema
 from tests.filters import InheritMyNestedFilter
 from tests.filters import AgeMarshmallowFilter
 from tests.filters import FirstNameMarshmallowFilter
+from tests.filters import PaginateAndOrderFilter
 from tests.models import User
 from tests.utils import compares_expressions
 
@@ -599,3 +600,192 @@ def test_filter_with_method_field(db_session):
     assert set(
         MyFilter(data={"test2": "J", "age": 25}, operator=OrOperator).apply()
     ) == {user2, user}
+
+
+def test_order_by_set_correctly(db_session):
+    class MyFilter(Filter):
+        test = Field(field_name="first_name")
+
+        class Meta:
+            model = User
+            session = db_session
+            order_by = User.birth_date.desc()
+
+    assert MyFilter._order_by.compare(User.birth_date.desc())
+
+
+def test_order_by_as_list_set_correctly():
+    class MyFilter(Filter):
+        test = Field(field_name="first_name")
+
+        class Meta:
+            model = User
+            order_by = [User.birth_date.desc(), User.first_name.asc()]
+
+    assert isinstance(MyFilter._order_by, list)
+    assert len(MyFilter._order_by) == 2
+    assert MyFilter._order_by[0].compare(User.birth_date.desc())
+    assert MyFilter._order_by[1].compare(User.first_name.asc())
+
+
+def test_offset_limit_not_set():
+    class MyFilter(Filter):
+        test = Field(field_name="first_name")
+
+        class Meta:
+            model = User
+
+    assert MyFilter._offset == 0
+    assert MyFilter._limit is None
+
+
+def test_offset_limit_set_correctly():
+    class MyFilter(Filter):
+        test = Field(field_name="first_name")
+
+        class Meta:
+            model = User
+            page_size = 10
+
+    assert MyFilter._offset == 0
+    assert MyFilter._limit == 10
+
+
+@pytest.mark.parametrize(
+    "page, page_size, from_index, to_index",
+    [
+        [None, None, 0, 1],
+        [1, None, 0, 1],
+        [2, None, 1, 2],
+        [3, None, 2, 3],
+        [4, None, 0, 0],
+        [1, 2, 0, 2],
+        [1, 0, 0, 1],
+        [2, 2, 2, 3],
+        [3, 2, 0, 0],
+        [-1, 2, 0, 2],
+        [-1, -1, 0, 3],
+    ],
+)
+def test_paginate_filter(page, page_size, from_index, to_index):
+    user = UserFactory(
+        first_name="Name",
+        birth_date=date(1990, 1, 1),
+    )
+    user2 = UserFactory(
+        first_name="some Name",
+        birth_date=date(1992, 1, 1),
+    )
+    user3 = UserFactory(
+        first_name="some Name 2",
+        birth_date=date(1991, 1, 1),
+    )
+    # ordered by birth_date
+    users = [user2, user3, user]
+    paginator = PaginateAndOrderFilter(
+        data={"first_name": "Name", "page": page, "page_size": page_size}
+    ).paginate()
+    assert paginator.get_objects() == users[from_index:to_index]
+
+
+def test_set_order_by_fails(db_session):
+    class MyFilter(Filter):
+        test = Field(field_name="first_name")
+
+        class Meta:
+            model = User
+            order_by = "unknown_field"
+            session = db_session
+
+    class MyFilter2(MyFilter):
+        class Meta:
+            model = User
+            order_by = ["a", "b"]
+            session = db_session
+
+    with pytest.raises(OrderByException) as exc:
+        MyFilter(data={}).apply()
+    assert exc.value.args == (
+        "User does not have a field called 'unknown_field' to use in an ORDER BY clause.",
+    )
+
+    with pytest.raises(OrderByException) as exc:
+        MyFilter(data={"order_by": "hello"}).apply()
+    assert exc.value.args == (
+        "User does not have a field called 'hello' to use in an ORDER BY clause.",
+    )
+
+    with pytest.raises(OrderByException) as exc:
+        MyFilter2(data={}).apply()
+    assert exc.value.args == (
+        "User does not have a field called 'a' to use in an ORDER BY clause.",
+    )
+
+    with pytest.raises(OrderByException) as exc:
+        MyFilter2(data={"order_by": ["x", "y"]}).apply()
+    assert exc.value.args == (
+        "User does not have a field called 'x' to use in an ORDER BY clause.",
+    )
+
+
+def test_order_by_edge_cases(db_session):
+    class MyFilter(Filter):
+        test = Field(field_name="first_name")
+
+        class Meta:
+            model = User
+            session = db_session
+
+    user = UserFactory(
+        first_name="B",
+        birth_date=date(1990, 1, 1),
+    )
+    result = MyFilter(data={"order_by": ","}).apply()
+    assert result.all() == [user]
+    result = MyFilter(data={"order_by": ",   ,    ,"}).apply()
+    assert result.all() == [user]
+    result = MyFilter(data={"order_by": ""}).apply()
+    assert result.all() == [user]
+    result = MyFilter(data={"order_by": 1}).apply()
+    assert result.all() == [user]
+
+
+def test_order_by(db_session):
+    class MyFilter(Filter):
+        test = Field(field_name="first_name")
+
+        class Meta:
+            model = User
+            order_by = ["first_name", "birth_date"]
+            session = db_session
+
+    user = UserFactory(
+        first_name="B",
+        birth_date=date(1990, 1, 1),
+    )
+    user2 = UserFactory(
+        first_name="A",
+        birth_date=date(1992, 1, 1),
+    )
+    user3 = UserFactory(
+        first_name="C",
+        birth_date=date(1993, 1, 1),
+    )
+    user4 = UserFactory(
+        first_name="D",
+        birth_date=date(1993, 1, 1),
+    )
+
+    result = MyFilter(data={}).apply()
+    assert result.all() == [user2, user, user3, user4]
+
+    result = MyFilter(data={"order_by": "first_name,birth_date"}).apply()
+    assert result.all() == [user2, user, user3, user4]
+    result = MyFilter(data={"order_by": "first_name,-birth_date"}).apply()
+    assert result.all() == [user2, user, user3, user4]
+    result = MyFilter(data={"order_by": "-first_name,-birth_date"}).apply()
+    assert result.all() == [user4, user3, user, user2]
+    result = MyFilter(data={"order_by": "-first_name    ,  -birth_date"}).apply()
+    assert result.all() == [user4, user3, user, user2]
+    result = MyFilter(data={"order_by": ["birth_date", "-first_name"]}).apply()
+    assert result.all() == [user, user2, user4, user3]

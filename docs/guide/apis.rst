@@ -2,7 +2,6 @@ APIs
 ----
 
 
-
 .. _operators:
 
 operators
@@ -31,6 +30,16 @@ Fields
 ======
 
 .. automodule:: sqlalchemy_filters.fields
+    :show-inheritance:
+    :members:
+    :special-members:
+
+.. _paginator:
+
+Paginator
+=========
+
+.. automodule:: sqlalchemy_filters.paginator
     :show-inheritance:
     :members:
     :special-members:

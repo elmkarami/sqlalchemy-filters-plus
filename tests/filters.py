@@ -133,3 +133,12 @@ class FirstNameMarshmallowFilter(MyNestedFilter):
 
     class Meta:
         model = User
+
+
+class PaginateAndOrderFilter(Filter):
+    first_name = Field(lookup_operator=ContainsOperator)
+
+    class Meta:
+        model = User
+        order_by = User.birth_date.desc()
+        page_size = 1
