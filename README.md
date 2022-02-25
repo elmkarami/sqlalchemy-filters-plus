@@ -8,7 +8,7 @@ Install
 -
 
 ```bash
-pip install sqlalchemy-fitlers-plus
+pip install sqlalchemy-filters-plus
 ```
 
 
