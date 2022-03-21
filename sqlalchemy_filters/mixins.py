@@ -2,7 +2,6 @@ from typing import Optional, Type, Dict, Any
 
 from sqlalchemy_filters.utils import Empty
 from sqlalchemy.inspection import inspect as sa_inspect
-from sqlalchemy.orm import Mapper
 
 
 class ForeignKeyFieldMixin:

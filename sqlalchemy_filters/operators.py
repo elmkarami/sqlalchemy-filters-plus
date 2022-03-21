@@ -28,7 +28,6 @@ from sqlalchemy.sql.operators import le
 from sqlalchemy.sql.operators import lt
 from sqlalchemy.sql.operators import or_
 from sqlalchemy.sql.operators import startswith_op
-from sqlalchemy.sql.operators import ilike_op
 
 from sqlalchemy_filters.exceptions import InvalidParamError
 from sqlalchemy_filters.utils import SQLALCHEMY_VERSION, empty_sql
