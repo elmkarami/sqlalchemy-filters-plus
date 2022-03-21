@@ -15,10 +15,6 @@ class Empty:
     pass
 
 
-def get_sqlalchemy_version():
-    return
-
-
 def is_none(value: Any) -> bool:
     return isinstance(value, type(None))
 

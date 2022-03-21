@@ -3,6 +3,7 @@ from datetime import datetime
 from datetime import timezone
 from unittest.mock import call
 from unittest.mock import Mock
+import warnings
 
 import pytest
 
@@ -18,6 +19,7 @@ from sqlalchemy_filters import FloatField
 from sqlalchemy_filters import IntegerField
 from sqlalchemy_filters import MethodField
 from sqlalchemy_filters import StringField
+from sqlalchemy_filters import Filter
 from sqlalchemy_filters.exceptions import FieldValidationError
 from sqlalchemy_filters.utils import empty_sql
 from tests.models import Article
@@ -86,9 +88,17 @@ def test_define_field_for_foreign_model_column():
 
 
 def test_define_field_set_foreign_key_dept_greater_than_one():
-    with pytest.raises(ValueError) as exc:
-        Field(field_name="model.other_model.column")
-    assert str(exc.value) == "Dept greater than 2 not supported yet."
+    with pytest.raises(KeyError) as exc:
+
+        class Test(Filter):
+            category = Field(
+                field_name="articles.categories.name",
+            )
+
+            class Meta:
+                model = User
+
+    assert str(exc.value) == "'categories'"
 
 
 def test_resolve_foreign_key_as_property_argument():
@@ -97,7 +107,6 @@ def test_resolve_foreign_key_as_property_argument():
     field.parent_filter = parent_filter
     field.resolve_fk()
     assert field._column is User.email
-    assert field.foreign_model is User
 
 
 def test_set_column():
@@ -365,3 +374,14 @@ def test_field_error_validation(field_class: Field, values):
 def test_field_validation(field_class: Field, values):
     for value, expected in values:
         assert field_class.validate(value) == expected
+
+
+def test_join_warning():
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        Field(join=True)
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "join is deprecated and will be removed in future versions." == str(
+            w[-1].message
+        )

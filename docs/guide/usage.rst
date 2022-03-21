@@ -78,26 +78,54 @@ Example:
 Related models
 ++++++++++++++
 
-Fields can also refer to columns in related models (Foreign keys)
+Fields can also refer to columns in related models (Foreign keys), let's extend our models to include a new one: Category.
+
+Category will have a one-to-many relationship with the Article
+
+.. code-block:: python
+
+    class Category(Base):
+        __tablename__ = "categories"
+        id = Column(Integer, primary_key=True)
+        name = Column(String)
+
+
+    class Article(Base):
+        ...
+        category_id = Column(Integer, ForeignKey(Category.id), nullable=False)
+        category = relationship(
+            Category,
+            uselist=False,
+            lazy="select",
+            foreign_keys=[category_id],
+            backref=backref("articles", uselist=True, lazy="select"),
+        )
+
+we can now create a new filter that makes use of these relationships in a very simple way(especially when dealing with joins).
+
+Let's take this example: Ability to filter authors by category name and by article title
+
 
 .. code-block:: python
 
     from sqlalchemy_filters import Filter, StringField
-    from sqlalchemy_filters.operators import EqualsOperator, StartsWithOperator
+    from sqlalchemy_filters.operators import EqualsOperator, IStartsWithOperator, IContainsOperator
 
 
-    class ArticleFilter(Filter):
-        author_first_name = StringField(
-            field_name="user.first_name", lookup_operator=ContainsOperator
+    class AuthorFilter(Filter):
+        title = StringField(
+            field_name="articles.title", lookup_operator=IContainsOperator
         )
-        title = StringField(lookup_operator=StartsWithOperator)
+        category = StringField(
+            field_name="articles.category.name", lookup_operator=IContainsOperator
+        )
 
-    class Meta:
-        model = Article
-        session = my_sqlalchemy_session
+        class Meta:
+            model = User
+            session = my_sqlalchemy_session
 
 
-.. warning:: Filtering with depth level greater than 1 is not supported at the moment.
+.. warning:: Trying to inherit from a filter that has a different model class will raise a :attr:`OrderByException <sqlalchemy_filters.exceptions.OrderByException>` FilterNotCompatible.
 
 Declaring fields
 ================

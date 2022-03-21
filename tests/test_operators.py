@@ -164,3 +164,11 @@ def test_range_operator_invalid_params():
         operators.RangeOperator(sql_expression="A", params=[])
 
     assert str(exc.value) == "RangeOperator.params should have exactly 2 values, got 0."
+
+
+def test_icontains_operator():
+    _column = column("my_column")
+    op = operators.IContainsOperator(sql_expression=_column, params=["A"])
+    assert compares_expressions(
+        op.to_sql(), func.lower(_column).contains(func.lower("A"))
+    )

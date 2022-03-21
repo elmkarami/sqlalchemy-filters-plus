@@ -221,6 +221,14 @@ class ContainsOperator(BaseOperator):
     pass
 
 
+@register_operator(sql_operator=contains_op)
+class IContainsOperator(BaseOperator):
+    def to_sql(self):
+        return self.operator(
+            func.lower(self.get_sql_expression()), func.lower(*self.params)
+        )
+
+
 @register_operator(sql_operator=startswith_op)
 class StartsWithOperator(BaseOperator):
     pass

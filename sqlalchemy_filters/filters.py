@@ -26,12 +26,13 @@ from sqlalchemy_filters.exceptions import (
     FieldValidationError,
     FilterValidationError,
     OrderByException,
+    FilterNotCompatible,
 )
 from sqlalchemy_filters.fields import Empty
 from sqlalchemy_filters.mixins import MarshmallowValidatorFilterMixin
 from sqlalchemy_filters.operators import AndOperator
 from sqlalchemy_filters.operators import BaseOperator
-from sqlalchemy_filters.utils import empty_sql, get_already_joined_tables, is_none
+from sqlalchemy_filters.utils import empty_sql, is_none
 from sqlalchemy_filters.fields import (
     Field,
     MethodField,
@@ -197,6 +198,7 @@ class FilterType(type):
         if not hasattr(meta, "model"):
             raise AttributeError(f"Filter '{name}.Meta' does not have a model.")
 
+        mcs.check_model_compatibility(name, meta.model, bases, nested.values())
         declared_fields = getattr(meta, "fields", [])
         attrs["session"] = getattr(meta, "session", None)
         attrs["_order_by"] = getattr(meta, "order_by", None)
@@ -222,6 +224,21 @@ class FilterType(type):
         for field in list(_class.fields.values()) + list(_class.method_fields.values()):
             field.post_init(_class)
         return _class
+
+    @classmethod
+    def check_model_compatibility(mcs, name, model, bases, nested):
+        for base in bases:
+            meta = getattr(base, "Meta", None)
+            base_model = meta and meta.model
+            if base_model and model != base_model:
+                raise FilterNotCompatible(
+                    class_name=name, model=model, base_filter=base
+                )
+        for nested in nested:
+            if nested.filter_class.Meta.model != model:
+                raise FilterNotCompatible(
+                    class_name=name, model=model, base_filter=nested.filter_class
+                )
 
     @classmethod
     def check_field_name(mcs, name: str, model, fields: Dict[str, Field]):
@@ -331,14 +348,19 @@ class BaseFilter(metaclass=FilterType):
                 field_obj.__set_name__(owner=cls, name=field_name)
                 cls.fields[field_name] = field_obj
 
-    def _apply_join(self, query):
-        joins = set(get_already_joined_tables(query))
-        for field in self.fields.values():
-            if field.join:
-                joins.add(field.join)
+    @classmethod
+    def _get_joins(cls):
+        joins = []
+        for _, field in cls.extract_declared_field(cls.fields).items():
+            joins.extend(field.joins)
+        for _, field in cls.extract_declared_field(cls.nested).items():
+            joins.extend(field.filter_class._get_joins())
+        return joins
 
-        if joins:
-            return query.join(*joins)
+    def _apply_join(self, query):
+        joins = set(self._get_joins())
+        for join in joins:
+            query = query.join(join)
         return query
 
     def set_query(self):
