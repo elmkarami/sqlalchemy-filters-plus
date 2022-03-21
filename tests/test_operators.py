@@ -169,4 +169,6 @@ def test_range_operator_invalid_params():
 def test_icontains_operator():
     _column = column("my_column")
     op = operators.IContainsOperator(sql_expression=_column, params=["A"])
-    assert compares_expressions(op.to_sql(), func.lower(_column).contains(func.lower("A")))
+    assert compares_expressions(
+        op.to_sql(), func.lower(_column).contains(func.lower("A"))
+    )
