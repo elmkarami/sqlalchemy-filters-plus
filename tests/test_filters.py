@@ -795,6 +795,8 @@ def test_order_by(db_session):
     assert result.all() == [user4, user3, user, user2]
     result = MyFilter(data={"order_by": ["birth_date", "-first_name"]}).apply()
     assert result.all() == [user, user2, user4, user3]
+    result = MyFilter(data={"order_by": User.id.desc()}).apply()
+    assert result.all() == [user4, user3, user2, user]
 
 
 def test_multi_depth_fk(db_session):

@@ -513,7 +513,7 @@ class BaseFilter(metaclass=FilterType):
         :param query: SQLAlchemy `Query` object.
         :return: Ordered SQLAlchemy `Query` object.
         """
-        order_by = self.data.get("order_by") or self._order_by
+        order_by = self.data.get("order_by", self._order_by)
         if is_none(order_by):
             return query
         if isinstance(order_by, str):
