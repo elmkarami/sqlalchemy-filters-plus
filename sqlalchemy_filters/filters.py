@@ -358,7 +358,8 @@ class BaseFilter(metaclass=FilterType):
         return joins
 
     def _apply_join(self, query):
-        joins = set(self._get_joins())
+        # remove duplicates and preserve order
+        joins = list(OrderedDict.fromkeys(self._get_joins()))
         for join in joins:
             query = query.join(join)
         return query
