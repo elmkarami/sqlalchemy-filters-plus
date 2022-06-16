@@ -3,14 +3,15 @@ from functools import wraps
 from typing import Any
 
 from sqlalchemy import text  # type: ignore
-from sqlalchemy.orm import Query  # type: ignore
 from sqlalchemy import __version__
-from sqlalchemy.sql import coercions
-from sqlalchemy.sql import roles
-
 
 SQLALCHEMY_VERSION = __version__
 IS_SQLALCHEMY_1_4 = __version__[0] == "1" and __version__[2] >= "4"
+
+
+if IS_SQLALCHEMY_1_4:
+    from sqlalchemy.sql import coercions
+    from sqlalchemy.sql import roles
 
 
 class Empty:
