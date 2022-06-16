@@ -32,7 +32,7 @@ from sqlalchemy_filters.fields import Empty
 from sqlalchemy_filters.mixins import MarshmallowValidatorFilterMixin
 from sqlalchemy_filters.operators import AndOperator
 from sqlalchemy_filters.operators import BaseOperator
-from sqlalchemy_filters.utils import empty_sql, is_none
+from sqlalchemy_filters.utils import empty_sql, is_none, is_already_joined
 from sqlalchemy_filters.fields import (
     Field,
     MethodField,
@@ -361,6 +361,8 @@ class BaseFilter(metaclass=FilterType):
         # remove duplicates and preserve order
         joins = list(OrderedDict.fromkeys(self._get_joins()))
         for join in joins:
+            if is_already_joined(query, join[0]):
+                continue
             query = query.join(join)
         return query
 
