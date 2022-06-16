@@ -603,14 +603,11 @@ def test_filter_with_method_field(db_session):
     user2 = UserFactory(first_name="John", last_name="Jack", age=20)
 
     assert set(MyFilter(data={"custom_key": "John"}).apply()) == {user, user2}
-    assert (
-        set(
-            MyFilter(
-                data={"custom_key": "John", "test2": "J"},
-            ).apply()
-        )
-        == {user2}
-    )
+    assert set(
+        MyFilter(
+            data={"custom_key": "John", "test2": "J"},
+        ).apply()
+    ) == {user2}
     assert set(
         MyFilter(data={"custom_key": "John", "test2": "J"}, operator=OrOperator).apply()
     ) == {user2, user}
