@@ -8,7 +8,7 @@ from sqlalchemy import __version__
 
 
 SQLALCHEMY_VERSION = __version__
-IS_SQLALCHEMY_1_4 = __version__.startswith("1.4")
+IS_SQLALCHEMY_1_4 = __version__[0] == "1" and __version__[2] >= "4"
 
 
 class Empty:

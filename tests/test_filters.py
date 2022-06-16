@@ -259,6 +259,18 @@ def test_foreign_key_contains_operator():
     assert result[0] == a1
 
 
+def test_foreign_key_filter_with_query_contains_join(db_session):
+    user = UserFactory(first_name="First Name")
+    user2 = UserFactory(first_name="Name")
+    a1 = ArticleFactory(user=user)
+    ArticleFactory(user=user2)
+    query = db_session.query(Article).join(User)
+    filter_obj = ContainsFKFilter(data={"author_first_name": "First"}, query=query)
+    result = filter_obj.apply().all()
+    assert len(result) == 1
+    assert result[0] == a1
+
+
 def test_2_foreign_keys():
     user = UserFactory(first_name="First Name", last_name="some last name")
     user2 = UserFactory(first_name="Name", last_name="test name")
