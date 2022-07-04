@@ -858,3 +858,14 @@ def test_incompatible_nested():
         str(exc.value)
         == "_.Meta.model(tests.models.Article) is not compatible with MyFilter.meta.model(tests.models.User)"
     )
+
+
+def test_detect_join_if_already_in_query(db_session):
+    user = UserFactory(first_name="first name")
+    user2 = UserFactory(first_name="something")
+    article = ArticleFactory(user=user)
+    ArticleFactory(user=user2)
+    query = db_session.query(Article).join(Article.user, isouter=True)
+    assert ContainsFKFilter(
+        data={"author_first_name": "name"}, query=query
+    ).apply().all() == [article]
