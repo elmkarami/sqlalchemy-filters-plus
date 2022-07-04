@@ -48,7 +48,7 @@ class SQLAlchemyGTE14JoinDetector:
         legacy_setup_joins = getattr(self.query, "_legacy_setup_joins", [])
         joins = [_[0] for _ in legacy_setup_joins]
         join_table = coercions.expect(roles.JoinTargetRole, model, legacy=True)
-        return join_table in joins or self._check_instrumented_attribute(model, joins)
+        return self._check_instrumented_attribute(model, joins) or join_table in joins
 
     def has_join_for(self, model) -> bool:
         return self._check_setup_joins(model) or self._check_legacy_setup_joins(model)
