@@ -7,16 +7,17 @@ from sqlalchemy_filters.fields import (
     IntegerField,
     StringField,
 )
-from sqlalchemy_filters.filters import Filter as BaseFilter, NestedFilter
+from sqlalchemy_filters.filters import Filter as BaseFilter
+from sqlalchemy_filters.filters import NestedFilter
 from sqlalchemy_filters.operators import (
     ContainsOperator,
     EqualsOperator,
     GTOperator,
+    IContainsOperator,
     IStartsWithOperator,
     LTEOperator,
     OrOperator,
     StartsWithOperator,
-    IContainsOperator,
 )
 from tests.models import Article, User
 

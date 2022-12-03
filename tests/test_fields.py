@@ -1,29 +1,26 @@
-from datetime import date
-from datetime import datetime
-from datetime import timezone
-from unittest.mock import call
-from unittest.mock import Mock
 import warnings
+from datetime import date, datetime, timezone
+from unittest.mock import Mock, call
 
 import pytest
-
 from sqlalchemy import column
 
-from sqlalchemy_filters import BooleanField
-from sqlalchemy_filters import DateField
-from sqlalchemy_filters import DateTimeField
-from sqlalchemy_filters import DecimalField
-from sqlalchemy_filters import exceptions
-from sqlalchemy_filters import Field
-from sqlalchemy_filters import FloatField
-from sqlalchemy_filters import IntegerField
-from sqlalchemy_filters import MethodField
-from sqlalchemy_filters import StringField
-from sqlalchemy_filters import Filter
+from sqlalchemy_filters import (
+    BooleanField,
+    DateField,
+    DateTimeField,
+    DecimalField,
+    Field,
+    Filter,
+    FloatField,
+    IntegerField,
+    MethodField,
+    StringField,
+    exceptions,
+)
 from sqlalchemy_filters.exceptions import FieldValidationError
 from sqlalchemy_filters.utils import empty_sql
-from tests.models import Article
-from tests.models import User
+from tests.models import Article, User
 from tests.utils import compares_expressions
 
 

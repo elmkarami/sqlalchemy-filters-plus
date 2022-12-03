@@ -1,9 +1,10 @@
 import pathlib
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 HERE = pathlib.Path(__file__).parent
 
-version = "1.1.4"
+version = "1.1.5"
 
 
 setup(

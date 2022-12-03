@@ -1,7 +1,6 @@
 import pytest
 
 from sqlalchemy_filters.paginator import Paginator
-
 from tests.factories import UserFactory
 from tests.models import User
 

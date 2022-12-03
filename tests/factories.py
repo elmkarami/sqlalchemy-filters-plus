@@ -4,10 +4,7 @@ import factory
 import faker
 from factory.alchemy import SQLAlchemyModelFactory
 
-from tests.models import Article
-from tests.models import Category
-from tests.models import User
-
+from tests.models import Article, Category, User
 
 factories_registry = set()
 Faker = faker.Faker()

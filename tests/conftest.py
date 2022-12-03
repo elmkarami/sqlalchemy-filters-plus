@@ -1,10 +1,10 @@
 import pytest
-
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-from tests.models import Base
+from sqlalchemy.orm import scoped_session, sessionmaker
+
 from tests.factories import patch_factories_session
 from tests.filters import patch_filters_session
+from tests.models import Base
 
 
 @pytest.fixture(scope="session")
