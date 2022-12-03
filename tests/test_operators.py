@@ -1,10 +1,7 @@
-from unittest.mock import Mock, patch, call
-import pytest
+from unittest.mock import Mock, call, patch
 
-from sqlalchemy import column
-from sqlalchemy import text
-from sqlalchemy import func
-from sqlalchemy import not_
+import pytest
+from sqlalchemy import column, func, not_, text
 
 from sqlalchemy_filters import operators
 from sqlalchemy_filters.exceptions import InvalidParamError

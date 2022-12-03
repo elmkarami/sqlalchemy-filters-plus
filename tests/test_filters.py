@@ -1,45 +1,36 @@
-from datetime import date
-from datetime import datetime
-from datetime import timezone
+from datetime import date, datetime, timezone
 from unittest.mock import Mock
 
 import pytest
+from marshmallow import Schema, ValidationError, fields
 
-from marshmallow import ValidationError, Schema, fields
-
-from sqlalchemy_filters import Field
-from sqlalchemy_filters import Filter
-from sqlalchemy_filters import NestedFilter
+from sqlalchemy_filters import Field, Filter, NestedFilter
 from sqlalchemy_filters.exceptions import (
+    FilterNotCompatible,
     FilterValidationError,
     OrderByException,
-    FilterNotCompatible,
 )
-from sqlalchemy_filters.operators import AndOperator
-from sqlalchemy_filters.operators import OrOperator
-from sqlalchemy_filters.operators import GTEOperator
+from sqlalchemy_filters.fields import IntegerField, MethodField, StringField
+from sqlalchemy_filters.operators import AndOperator, GTEOperator, OrOperator
 from sqlalchemy_filters.utils import empty_sql
-from sqlalchemy_filters.fields import StringField
-from sqlalchemy_filters.fields import IntegerField
-from sqlalchemy_filters.fields import MethodField
-from tests.factories import ArticleFactory
-from tests.factories import UserFactory
-from tests.factories import CategoryFactory
-from tests.filters import ContainsFilter
-from tests.filters import ContainsFKFilter
-from tests.filters import Contains2FKFilter
-from tests.filters import EqualFilter
-from tests.filters import ArticleMultipleFKFilter
-from tests.filters import MyNestedFilter
-from tests.filters import StartsWithFilter
-from tests.filters import TypedFilter
-from tests.filters import AgeSchema
-from tests.filters import InheritMyNestedFilter
-from tests.filters import AgeMarshmallowFilter
-from tests.filters import FirstNameMarshmallowFilter
-from tests.filters import PaginateAndOrderFilter
-from tests.filters import MultiDepthFilter
-from tests.models import User, Article
+from tests.factories import ArticleFactory, CategoryFactory, UserFactory
+from tests.filters import (
+    AgeMarshmallowFilter,
+    AgeSchema,
+    ArticleMultipleFKFilter,
+    Contains2FKFilter,
+    ContainsFilter,
+    ContainsFKFilter,
+    EqualFilter,
+    FirstNameMarshmallowFilter,
+    InheritMyNestedFilter,
+    MultiDepthFilter,
+    MyNestedFilter,
+    PaginateAndOrderFilter,
+    StartsWithFilter,
+    TypedFilter,
+)
+from tests.models import Article, User
 from tests.utils import compares_expressions
 
 
@@ -869,3 +860,19 @@ def test_detect_join_if_already_in_query(db_session):
     assert ContainsFKFilter(
         data={"author_first_name": "name"}, query=query
     ).apply().all() == [article]
+
+
+def test_inherit_fields_from_abstract(db_session, faker):
+    class AbstractFilter(Filter):
+        _abstract = True
+
+        email = Field()
+
+    class UserFilter(AbstractFilter):
+        class Meta:
+            model = User
+
+    assert list(AbstractFilter.fields.keys()) == ["email"]
+    assert isinstance(AbstractFilter.fields["email"], Field)
+    assert list(UserFilter.fields.keys()) == ["email"]
+    assert isinstance(UserFilter.fields["email"], Field)

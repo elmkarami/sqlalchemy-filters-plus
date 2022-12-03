@@ -11,8 +11,7 @@ IS_GTE_1_4 = __version__[0] > "1" or (__version__[0] == "1" and __version__[2] >
 
 
 if IS_GTE_1_4:
-    from sqlalchemy.sql import coercions
-    from sqlalchemy.sql import roles
+    from sqlalchemy.sql import coercions, roles
 
 
 class Empty:

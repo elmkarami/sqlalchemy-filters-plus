@@ -1,7 +1,8 @@
-from typing import Optional, Type, Dict, Any
+from typing import Any, Dict, Optional, Type
+
+from sqlalchemy.inspection import inspect as sa_inspect
 
 from sqlalchemy_filters.utils import Empty
-from sqlalchemy.inspection import inspect as sa_inspect
 
 
 class ForeignKeyFieldMixin:

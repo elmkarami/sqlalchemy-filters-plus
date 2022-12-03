@@ -3,31 +3,26 @@ This module contains the defined operators used to construct simple or more comp
 """
 
 from functools import wraps
-from typing import Callable
-from typing import List
-from typing import Type
-from typing import Optional
-from typing import TypeVar
+from typing import Callable, List, Optional, Type, TypeVar
 
-from sqlalchemy import column
-from sqlalchemy import func
-from sqlalchemy.sql.elements import BinaryExpression
-from sqlalchemy.sql.elements import ClauseElement
-from sqlalchemy.sql.elements import TextClause
-from sqlalchemy.sql.operators import and_
-from sqlalchemy.sql.operators import between_op
-from sqlalchemy.sql.operators import contains_op
-from sqlalchemy.sql.operators import endswith_op
-from sqlalchemy.sql.operators import eq
-from sqlalchemy.sql.operators import ge
-from sqlalchemy.sql.operators import gt
-from sqlalchemy.sql.operators import in_op
-from sqlalchemy.sql.operators import is_
-from sqlalchemy.sql.operators import isnot
-from sqlalchemy.sql.operators import le
-from sqlalchemy.sql.operators import lt
-from sqlalchemy.sql.operators import or_
-from sqlalchemy.sql.operators import startswith_op
+from sqlalchemy import column, func
+from sqlalchemy.sql.elements import BinaryExpression, ClauseElement, TextClause
+from sqlalchemy.sql.operators import (
+    and_,
+    between_op,
+    contains_op,
+    endswith_op,
+    eq,
+    ge,
+    gt,
+    in_op,
+    is_,
+    isnot,
+    le,
+    lt,
+    or_,
+    startswith_op,
+)
 
 from sqlalchemy_filters.exceptions import InvalidParamError
 from sqlalchemy_filters.utils import SQLALCHEMY_VERSION, empty_sql

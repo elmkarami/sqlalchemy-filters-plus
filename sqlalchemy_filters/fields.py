@@ -1,33 +1,18 @@
 """
 This module defines all types of fields used by the filter classes.
 """
-from datetime import date
-from datetime import datetime
-from datetime import time
-from datetime import timezone
-from decimal import Decimal
-from typing import Any
-from typing import Callable
-from typing import Optional
-from typing import Tuple
-from typing import Type
-from typing import Union
 import warnings
+from datetime import date, datetime, time, timezone
+from decimal import Decimal
+from typing import Any, Callable, Optional, Tuple, Type, Union
 
 from sqlalchemy import column  # type: ignore
-from sqlalchemy.sql.elements import BinaryExpression
-from sqlalchemy.sql.elements import ColumnClause
-from sqlalchemy.sql.elements import TextClause
+from sqlalchemy.sql.elements import BinaryExpression, ColumnClause, TextClause
 
-from sqlalchemy_filters.exceptions import FieldMethodNotFound
-from sqlalchemy_filters.exceptions import FieldValidationError
+from sqlalchemy_filters.exceptions import FieldMethodNotFound, FieldValidationError
 from sqlalchemy_filters.mixins import ForeignKeyFieldMixin
-from sqlalchemy_filters.operators import BaseOperator
-from sqlalchemy_filters.operators import EqualsOperator
-from sqlalchemy_filters.utils import Empty
-from sqlalchemy_filters.utils import empty_sql
-from sqlalchemy_filters.utils import is_none
-from sqlalchemy_filters.utils import to_timezone
+from sqlalchemy_filters.operators import BaseOperator, EqualsOperator
+from sqlalchemy_filters.utils import Empty, empty_sql, is_none, to_timezone
 
 
 class BaseField:

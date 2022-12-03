@@ -1,51 +1,36 @@
 """
 Modules defines the Filter and NestedFilter classes
 """
-from copy import deepcopy
 from collections import OrderedDict
+from copy import deepcopy
 from functools import reduce
-from typing import Any
-from typing import List
-from typing import Dict
-from typing import Optional
-from typing import Union
-from typing import Type
+from typing import Any, Dict, List, Optional, Type, Union
 
-from sqlalchemy import (
-    String,
-    Integer,
-    Float,
-    DECIMAL,
-    Date,
-    DateTime,
-    Boolean,
-)
+from sqlalchemy import DECIMAL, Boolean, Date, DateTime, Float, Integer, String
 from sqlalchemy.sql.elements import UnaryExpression
 
 from sqlalchemy_filters.exceptions import (
     FieldValidationError,
+    FilterNotCompatible,
     FilterValidationError,
     OrderByException,
-    FilterNotCompatible,
 )
-from sqlalchemy_filters.fields import Empty
-from sqlalchemy_filters.mixins import MarshmallowValidatorFilterMixin
-from sqlalchemy_filters.operators import AndOperator
-from sqlalchemy_filters.operators import BaseOperator
-from sqlalchemy_filters.utils import empty_sql, is_none, is_already_joined
 from sqlalchemy_filters.fields import (
-    Field,
-    MethodField,
-    StringField,
-    IntegerField,
-    FloatField,
-    DecimalField,
+    BooleanField,
     DateField,
     DateTimeField,
-    BooleanField,
+    DecimalField,
+    Empty,
+    Field,
+    FloatField,
+    IntegerField,
+    MethodField,
+    StringField,
 )
+from sqlalchemy_filters.mixins import MarshmallowValidatorFilterMixin
+from sqlalchemy_filters.operators import AndOperator, BaseOperator
 from sqlalchemy_filters.paginator import Paginator
-
+from sqlalchemy_filters.utils import empty_sql, is_already_joined, is_none
 
 FILTERS_MAPPING = {
     String: StringField,
@@ -189,16 +174,14 @@ class FilterType(type):
             elif isinstance(field, NestedFilter):
                 nested[field_name] = field
 
+        mcs.check_model_presence(name, attrs)
         meta = attrs.get("Meta")
         _abstract = attrs.get("_abstract")
-        if _abstract:
-            return super().__new__(mcs, name, bases, attrs)
-        if not meta:
-            raise AttributeError(f"Filter {name} does not define a Meta class.")
-        if not hasattr(meta, "model"):
-            raise AttributeError(f"Filter '{name}.Meta' does not have a model.")
+        if not _abstract:
+            mcs.check_model_compatibility(name, meta.model, bases, nested.values())
+            attrs["_model"] = meta.model
+            mcs.check_field_name(name, meta.model, fields)
 
-        mcs.check_model_compatibility(name, meta.model, bases, nested.values())
         declared_fields = getattr(meta, "fields", [])
         attrs["session"] = getattr(meta, "session", None)
         attrs["_order_by"] = getattr(meta, "order_by", None)
@@ -206,8 +189,6 @@ class FilterType(type):
         attrs["_offset"] = 0
         attrs["marshmallow_schema"] = getattr(meta, "marshmallow_schema", None)
         attrs["declared_fields"] = declared_fields
-        attrs["_model"] = meta.model
-        mcs.check_field_name(name, meta.model, fields)
         _class: Filter = super().__new__(mcs, name, bases, attrs)  # noqa
 
         if not hasattr(_class, "fields"):
@@ -221,9 +202,21 @@ class FilterType(type):
         _class.nested = deepcopy({**_class.nested, **nested})
         _class.method_fields = deepcopy({**_class.method_fields, **method_fields})
         _class.create_missing_fields(declared_fields)
-        for field in list(_class.fields.values()) + list(_class.method_fields.values()):
-            field.post_init(_class)
+        if not _abstract:
+            for field in list(_class.fields.values()) + list(
+                _class.method_fields.values()
+            ):
+                field.post_init(_class)
         return _class
+
+    @classmethod
+    def check_model_presence(mcs, name, attrs):
+        meta = attrs.get("Meta")
+        _abstract = attrs.get("_abstract")
+        if not _abstract and not meta:
+            raise AttributeError(f"Filter {name} does not define a Meta class.")
+        if not _abstract and not hasattr(meta, "model"):
+            raise AttributeError(f"Filter '{name}.Meta' does not have a model.")
 
     @classmethod
     def check_model_compatibility(mcs, name, model, bases, nested):

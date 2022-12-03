@@ -1,10 +1,7 @@
 """
 This module defined all exceptions used by the library.
 """
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
+from typing import Dict, List, Optional, Type
 
 
 class BaseError(Exception):
